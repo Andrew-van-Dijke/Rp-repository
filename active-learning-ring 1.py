@@ -201,7 +201,7 @@ def update_k(K, Ko, Kp, Ka, kodot, kpdot, kadot):
 
 
 N = 6  # ---------------------------------------------------------------------------------------------------------------
-Nsteps = 25  # --------------------------------------------------------------------------------------------------------
+Nsteps = 100  # --------------------------------------------------------------------------------------------------------
 Koi, Kpi, Kai = (
     0.05,
     0.02,
@@ -210,7 +210,7 @@ Koi, Kpi, Kai = (
 
 "learning rate = alpha/eta, it should be << 1"
 eta = 1  # -------------------------------------------------------------------------------------------------------------
-alpha = 0.01  # --------------------------------------------------------------------------------------------------------
+alpha = 0.001  # --------------------------------------------------------------------------------------------------------
 lr = alpha / eta  # learing rate
 
 
@@ -233,13 +233,13 @@ def add_target():
 DI_id = np.array(
     [0]
 )  # ------------------------------------------------------------------------------------------------
-DI_val = np.array([150]) * (
+DI_val = np.array([60]) * (
     np.pi / 180
 )  # ----------------------------------------------------------------------------------
 DT_id = np.array(
     [3]
 )  # ------------------------------------------------------------------------------------------------
-DT_val = np.array([90]) * (
+DT_val = np.array([180]) * (
     np.pi / 180
 )  # ----------------------------------------------------------------------------------
 
@@ -247,6 +247,28 @@ DT_val = np.array([90]) * (
 polytheta = (N - 2) * np.pi / N  # Exterior angles of a regular N-gon
 DI_val = polytheta - DI_val
 DT_val = polytheta - DT_val
+add_target()
+
+"target 2"
+" the angles are exterior angles"
+DI_id = np.array(
+    [3]
+)  # ------------------------------------------------------------------------------------------------
+DI_val = np.array([60]) * (
+    np.pi / 180
+)  # ----------------------------------------------------------------------------------
+DT_id = np.array(
+    [0]
+)  # ------------------------------------------------------------------------------------------------
+DT_val = np.array([180]) * (
+    np.pi / 180
+)  # ----------------------------------------------------------------------------------
+
+" because the reference configuration is a regular polygon, the angluar difference of each unit should minus the exterior angle of this polygon"
+polytheta = (N - 2) * np.pi / N  # Exterior angles of a regular N-gon
+DI_val = polytheta - DI_val
+DT_val = polytheta - DT_val
+
 add_target()
 
 # DI_id = np.array([3])
@@ -457,13 +479,15 @@ def visulization():
         # add the last bar information
         Pxy = np.append(Pxy, [[0, 0]], axis=0)
 
+        # create a new subplot
+        _, ax_sub = plt.subplots(1, 1)
         # plot the bars
         t = 1
-        ax.plot(Pxy[:, 0], Pxy[:, 1], lw=3, alpha=t, color="#87CEFA")
+        ax_sub.plot(Pxy[:, 0], Pxy[:, 1], lw=3, alpha=t, color="#87CEFA")
 
         # plot the masses
         size = 200
-        ax.scatter(
+        ax_sub.scatter(
             Pxy[:, 0],
             Pxy[:, 1],
             marker="o",
@@ -474,7 +498,7 @@ def visulization():
             alpha=t,
             zorder=2,
         )
-        ax.scatter(
+        ax_sub.scatter(
             Pxy[0],
             Pxy[0],
             marker="o",
@@ -484,7 +508,7 @@ def visulization():
             alpha=t,
             zorder=2,
         )  # inputs:first
-        ax.scatter(
+        ax_sub.scatter(
             Pxy[nodesI, 0],
             Pxy[nodesI, 1],
             marker="o",
@@ -494,7 +518,7 @@ def visulization():
             alpha=t,
             zorder=2,
         )  # inputs:orange
-        ax.scatter(
+        ax_sub.scatter(
             Pxy[nodesT, 0],
             Pxy[nodesT, 1],
             marker="o",
@@ -506,12 +530,12 @@ def visulization():
         )  # outputs:red
 
         # configure the axes
-        ax.axis("equal")
-        ax.set_xlim(Pxy[:, 0].min() - 1, Pxy[:, 0].max() + 1)
-        ax.set_ylim(Pxy[:, 1].min() - 1, Pxy[:, 1].max() + 1)
-        ax.set_axis_off()
-        ax.set_title("Target {}".format(target + 1))
-        ax.axis("equal")
+        ax_sub.axis("equal")
+        ax_sub.set_xlim(Pxy[:, 0].min() - 1, Pxy[:, 0].max() + 1)
+        ax_sub.set_ylim(Pxy[:, 1].min() - 1, Pxy[:, 1].max() + 1)
+        ax_sub.set_axis_off()
+        ax_sub.set_title("Target {}".format(target + 1))
+        ax_sub.axis("equal")
 
         return ax
 
