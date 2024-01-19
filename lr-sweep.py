@@ -180,9 +180,9 @@ def make_kdot(DF, DC, lr, direction):
             )  # if yield, the real part of ith eigenvalue is positive
 
             if not Stable:
-                kodot[i] = 0
+                # kodot[i] = 0
                 # kpdot[i] = 0
-                # kadot[i] = 0
+                kadot[i] = 0
 
     stability_constraint()
 
@@ -201,7 +201,7 @@ def update_k(K, Ko, Kp, Ka, kodot, kpdot, kadot):
 
 
 N = 6  # ---------------------------------------------------------------------------------------------------------------
-Nsteps = 20  # --------------------------------------------------------------------------------------------------------
+Nsteps = 10  # --------------------------------------------------------------------------------------------------------
 Koi, Kpi, Kai = (
     0.05,
     0.01,
@@ -210,9 +210,33 @@ Koi, Kpi, Kai = (
 
 "learning rate = alpha/eta, it should be << 1"
 eta = 1  # -------------------------------------------------------------------------------------------------------------
-alpha = 0.01  # --------------------------------------------------------------------------------------------------------
+alpha = 0.001  # --------------------------------------------------------------------------------------------------------
 lr = alpha / eta  # learing rate
+lrlist = [0.00001, 0.0001, 0.0005, 0.00075, 0.001, 0.0015, 0.002, 0.0025, 0.003]
+#     0.005,
+#     0.0075,
+# ]
+#     0.01,
+#     0.02,
+#     0.025,
+#     0.05,
+#     0.1,
+#     0.2,
+# ]
 
+# lrlist = [
+#     0.01,
+#     0.012,
+#     0.014,
+#     0.016,
+#     0.018,
+#     0.02,
+#     0.025,
+#     0.04,
+#     0.05,
+#     0.075,
+#     0.1,
+# ]
 
 "define targets"
 DI_id_all = []
@@ -233,13 +257,13 @@ def add_target():
 DI_id = np.array(
     [0]
 )  # ------------------------------------------------------------------------------------------------
-DI_val = np.array([150]) * (
+DI_val = np.array([90]) * (
     np.pi / 180
 )  # ----------------------------------------------------------------------------------
 DT_id = np.array(
     [3]
 )  # ------------------------------------------------------------------------------------------------
-DT_val = np.array([90]) * (
+DT_val = np.array([180]) * (
     np.pi / 180
 )  # ----------------------------------------------------------------------------------
 
@@ -310,67 +334,81 @@ def convert_Dval(D_val_all, D_id_all, target_id, N):
     )
 
 
-for i in range(Ntarget):
-    DF_step[0, :, i] = convert_Dval(DI_val_all, DI_id_all, i, N)
-Error = 0
-for step in range(Nsteps):
-    if (step + 1) % 10 == 0:
-        print("Current step: {} / {}".format(step + 1, Nsteps))
-        print(Error)
-    for target in range(Ntarget):
-        DI = convert_Dval(DI_val_all, DI_id_all, target, N)
-        DT = convert_Dval(DT_val_all, DT_id_all, target, N)
-        nodesI = DI_id_all[target]
-        nodesT = DT_id_all[target]
-        d = np.sign(max(nodesI) - min(nodesT))
+Errorlist = []
+for learning_rate in lrlist:
+    for i in range(Ntarget):
+        DF_step[0, :, i] = convert_Dval(DI_val_all, DI_id_all, i, N)
+    Error = 0
+    for step in range(Nsteps):
+        if (step + 1) % 10 == 0:
+            print("Current step: {} / {}".format(step + 1, Nsteps))
+            print(Error)
+        for target in range(Ntarget):
+            DI = convert_Dval(DI_val_all, DI_id_all, target, N)
+            DT = convert_Dval(DT_val_all, DT_id_all, target, N)
+            nodesI = DI_id_all[target]
+            nodesT = DT_id_all[target]
+            d = np.sign(max(nodesI) - min(nodesT))
 
-        "nodes fixed in clamped state"
-        nodesC = np.sort(np.concatenate((nodesI, nodesT)))
+            "nodes fixed in clamped state"
+            nodesC = np.sort(np.concatenate((nodesI, nodesT)))
 
-        "find initial free states"
-        DF = find_equilibrium(K, DI, nodesI, N)
-        DF_step[step + 1, :, target] = DF
+            "find initial free states"
+            DF = find_equilibrium(K, DI, nodesI, N)
+            DF_step[step + 1, :, target] = DF
 
-        " calculate the error"
-        Error = np.sum((DF[nodesT] - DT[nodesT]) ** 2)
-        Error_step[step, target] = Error
+            " calculate the error"
+            Error = np.sum((DF[nodesT] - DT[nodesT]) ** 2)
+            Error_step[step, target] = Error
 
-        "define nudge rotation vector DN"
-        DN = np.copy(DI)
-        DN[nodesT] = DF[nodesT] + eta * (DT[nodesT] - DF[nodesT])
+            "define nudge rotation vector DN"
+            DN = np.copy(DI)
+            DN[nodesT] = DF[nodesT] + eta * (DT[nodesT] - DF[nodesT])
 
-        "clamped state"
-        DC = find_equilibrium(K, DN, nodesC, N)
+            "clamped state"
+            DC = find_equilibrium(K, DN, nodesC, N)
 
-        "update stiffness matrix"
-        kodot, kpdot, kadot = make_kdot(
-            DF, DC, lr, direction=d
-        )  # --------------------------------
-        (
-            K,
-            Ko,
-            Kp,
-            Ka,
-        ) = update_k(K, Ko, Kp, Ka, kodot, kpdot, kadot)
+            "update stiffness matrix"
+            kodot, kpdot, kadot = make_kdot(
+                DF, DC, learning_rate, direction=d
+            )  # --------------------------------
+            (
+                K,
+                Ko,
+                Kp,
+                Ka,
+            ) = update_k(K, Ko, Kp, Ka, kodot, kpdot, kadot)
 
-    K_step[:, :, step + 1] = K
-    Ko_step[step + 1, :] = Ko
-    Kp_step[step + 1, :] = Kp
-    Ka_step[step + 1, :] = Ka
-    eigvals_step[step + 1, :] = np.sort(np.linalg.eigvals(K))
+        K_step[:, :, step + 1] = K
+        Ko_step[step + 1, :] = Ko
+        Kp_step[step + 1, :] = Kp
+        Ka_step[step + 1, :] = Ka
+        eigvals_step[step + 1, :] = np.sort(np.linalg.eigvals(K))
 
-np.save("./K_step.npy", K_step)
-np.save("./Ko_step.npy", Ko_step)
-np.save("./Kp_step.npy", Kp_step)
-np.save("./Ka_step.npy", Ka_step)
-np.save("./DF_step.npy", DF_step)
-np.save("./Error_step.npy", Error_step)
+    Errorlist.append(Error)
+    print(Errorlist)
 
-print("Final Stiffness Matrix K = \n", K)
-print("Onsite Passive Stiffness Matrix K = \n", Ko)
-print("Symmetric Passive Stiffness Matrix K = \n", Kp)
-print("Active Stiffness Matrix K = \n", Ka)
-print("Eigenvalues = \n", eigvals_step[-1, :])
+    np.save("./K_step.npy", K_step)
+    np.save("./Ko_step.npy", Ko_step)
+    np.save("./Kp_step.npy", Kp_step)
+    np.save("./Ka_step.npy", Ka_step)
+    np.save("./DF_step.npy", DF_step)
+    np.save("./Error_step.npy", Error_step)
+
+    # print("Final Stiffness Matrix K = \n", K)
+    # print("Onsite Passive Stiffness Matrix K = \n", Ko)
+    # print("Symmetric Passive Stiffness Matrix K = \n", Kp)
+    # print("Active Stiffness Matrix K = \n", Ka)
+    # print("Eigenvalues = \n", eigvals_step[-1, :])
+
+    print(learning_rate)
+
+print(Errorlist)
+plt.scatter(lrlist, Errorlist)
+plt.xlabel("learning rate")
+plt.ylabel("Error")
+plt.xscale("log")
+plt.yscale("log")
 
 
 def visulization():
@@ -555,4 +593,4 @@ def visulization():
     plt.show()
 
 
-visulization()
+# visulization()
