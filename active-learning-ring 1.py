@@ -180,9 +180,9 @@ def make_kdot(DF, DC, lr, direction):
             )  # if yield, the real part of ith eigenvalue is positive
 
             if not Stable:
-                kodot[i] = 0
+                # kodot[i] = 0
                 # kpdot[i] = 0
-                # kadot[i] = 0
+                kadot[i] = 0
 
     stability_constraint()
 
@@ -201,7 +201,7 @@ def update_k(K, Ko, Kp, Ka, kodot, kpdot, kadot):
 
 
 N = 6  # ---------------------------------------------------------------------------------------------------------------
-Nsteps = 20  # --------------------------------------------------------------------------------------------------------
+Nsteps = 30  # --------------------------------------------------------------------------------------------------------
 Koi, Kpi, Kai = (
     0.05,
     0.01,
@@ -210,7 +210,7 @@ Koi, Kpi, Kai = (
 
 "learning rate = alpha/eta, it should be << 1"
 eta = 1  # -------------------------------------------------------------------------------------------------------------
-alpha = 0.01  # --------------------------------------------------------------------------------------------------------
+alpha = 0.002  # --------------------------------------------------------------------------------------------------------
 lr = alpha / eta  # learing rate
 
 
@@ -230,44 +230,29 @@ def add_target():
 
 "target 1"
 " the angles are exterior angles"
-DI_id = np.array(
-    [0]
-)  # ------------------------------------------------------------------------------------------------
-DI_val = np.array([150]) * (
-    np.pi / 180
-)  # ----------------------------------------------------------------------------------
-DT_id = np.array(
-    [3]
-)  # ------------------------------------------------------------------------------------------------
-DT_val = np.array([90]) * (
-    np.pi / 180
-)  # ----------------------------------------------------------------------------------
+DI_id = np.array([0])
+DI_val = np.array([30]) * (np.pi / 180)
+DT_id = np.array([3])
+DT_val = np.array([-20]) * (np.pi / 180)
 
 " because the reference configuration is a regular polygon, the angluar difference of each unit should minus the exterior angle of this polygon"
-polytheta = (N - 2) * np.pi / N  # Exterior angles of a regular N-gon
-DI_val = polytheta - DI_val
-DT_val = polytheta - DT_val
+# polytheta = (N - 2) * np.pi / N  # Exterior angles of a regular N-gon
+# DI_val = polytheta - DI_val
+# DT_val = polytheta - DT_val
 add_target()
 
 # "target 2"
 # " the angles are exterior angles"
-# DI_id = np.array(
-#     [3]
-# )  # ------------------------------------------------------------------------------------------------
-# DI_val = np.array([60]) * (
-#     np.pi / 180
-# )  # ----------------------------------------------------------------------------------
-# DT_id = np.array(
-#     [0]
-# )  # ------------------------------------------------------------------------------------------------
-# DT_val = np.array([180]) * (
-#     np.pi / 180
-# )  # ----------------------------------------------------------------------------------
+# DI_id = np.array([3])
+# DI_val = np.array([60]) * (np.pi / 180)
+# DT_id = np.array([0])
+# DT_val = np.array([180]) * (np.pi / 180)
 
 # " because the reference configuration is a regular polygon, the angluar difference of each unit should minus the exterior angle of this polygon"
 # polytheta = (N - 2) * np.pi / N  # Exterior angles of a regular N-gon
 # DI_val = polytheta - DI_val
 # DT_val = polytheta - DT_val
+# add_target()
 
 # add_target()
 
@@ -398,7 +383,7 @@ def visulization():
                 ax[i].set_xlabel("Steps", fontsize=font)
                 ax[i].set_ylabel(r"Angle ($\circ$)", fontsize=font)
                 ax[i].legend(fontsize=font)
-                ax[i].set_title("Target {}".format(i + 1))
+                # ax[i].set_title("Target {}".format(i + 1))
                 ax[i].legend()
     else:
         for j in range(N):
@@ -410,7 +395,7 @@ def visulization():
             ax.set_xlabel("Steps", fontsize=font)
             ax.set_ylabel(r"Angle ($\circ$)", fontsize=font)
             ax.legend(fontsize=font)
-            ax.set_title("Target {}".format(i + 1))
+            # ax.set_title("Target {}".format(i + 1))
             ax.legend()
     plt.show()
 
@@ -534,7 +519,7 @@ def visulization():
         ax_sub.set_xlim(Pxy[:, 0].min() - 1, Pxy[:, 0].max() + 1)
         ax_sub.set_ylim(Pxy[:, 1].min() - 1, Pxy[:, 1].max() + 1)
         ax_sub.set_axis_off()
-        ax_sub.set_title("Target {}".format(target + 1))
+        # ax_sub.set_title("Target {}".format(target + 1))
         ax_sub.axis("equal")
 
         return ax

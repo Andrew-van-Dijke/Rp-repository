@@ -201,7 +201,7 @@ def update_k(K, Ko, Kp, Ka, kodot, kpdot, kadot):
 
 
 N = 6  # ---------------------------------------------------------------------------------------------------------------
-Nsteps = 10  # --------------------------------------------------------------------------------------------------------
+Nsteps = 20  # --------------------------------------------------------------------------------------------------------
 Koi, Kpi, Kai = (
     0.05,
     0.01,
@@ -212,10 +212,19 @@ Koi, Kpi, Kai = (
 eta = 1  # -------------------------------------------------------------------------------------------------------------
 alpha = 0.001  # --------------------------------------------------------------------------------------------------------
 lr = alpha / eta  # learing rate
-lrlist = [0.00001, 0.0001, 0.0005, 0.00075, 0.001, 0.0015, 0.002, 0.0025, 0.003]
-#     0.005,
-#     0.0075,
-# ]
+lrlist = [
+    0.001,
+    0.0015,
+    0.002,
+    0.0025,
+    0.003,
+    0.005,
+    0.0075,
+    0.01,
+    0.015,
+    0.02,
+    0.025,
+]
 #     0.01,
 #     0.02,
 #     0.025,
@@ -257,7 +266,7 @@ def add_target():
 DI_id = np.array(
     [0]
 )  # ------------------------------------------------------------------------------------------------
-DI_val = np.array([90]) * (
+DI_val = np.array([60]) * (
     np.pi / 180
 )  # ----------------------------------------------------------------------------------
 DT_id = np.array(
@@ -273,27 +282,27 @@ DI_val = polytheta - DI_val
 DT_val = polytheta - DT_val
 add_target()
 
-# "target 2"
-# " the angles are exterior angles"
-# DI_id = np.array(
-#     [3]
-# )  # ------------------------------------------------------------------------------------------------
-# DI_val = np.array([60]) * (
-#     np.pi / 180
-# )  # ----------------------------------------------------------------------------------
-# DT_id = np.array(
-#     [0]
-# )  # ------------------------------------------------------------------------------------------------
-# DT_val = np.array([180]) * (
-#     np.pi / 180
-# )  # ----------------------------------------------------------------------------------
+"target 2"
+" the angles are exterior angles"
+DI_id = np.array(
+    [3]
+)  # ------------------------------------------------------------------------------------------------
+DI_val = np.array([60]) * (
+    np.pi / 180
+)  # ----------------------------------------------------------------------------------
+DT_id = np.array(
+    [0]
+)  # ------------------------------------------------------------------------------------------------
+DT_val = np.array([180]) * (
+    np.pi / 180
+)  # ----------------------------------------------------------------------------------
 
-# " because the reference configuration is a regular polygon, the angluar difference of each unit should minus the exterior angle of this polygon"
-# polytheta = (N - 2) * np.pi / N  # Exterior angles of a regular N-gon
-# DI_val = polytheta - DI_val
-# DT_val = polytheta - DT_val
+" because the reference configuration is a regular polygon, the angluar difference of each unit should minus the exterior angle of this polygon"
+polytheta = (N - 2) * np.pi / N  # Exterior angles of a regular N-gon
+DI_val = polytheta - DI_val
+DT_val = polytheta - DT_val
 
-# add_target()
+add_target()
 
 # DI_id = np.array([3])
 # DI_val = np.array([10])*(np.pi/180)
@@ -301,41 +310,44 @@ add_target()
 # DT_val = np.array([])*(np.pi/180)
 # add_target()-10
 
-Ntarget = np.shape(DI_id_all)[0]
-K_step = np.zeros((N, N, Nsteps + 1))  # the stiffness materix of each steps
-Ko_step = np.zeros((Nsteps + 1, N))
-Kp_step = np.zeros((Nsteps + 1, N))
-Ka_step = np.zeros((Nsteps + 1, N))
-DF_step = np.zeros(
-    (Nsteps + 1, N, Ntarget)
-)  # the angle deflecton of the free state in each step
-eigvals_step = np.zeros(
-    (Nsteps + 1, N), dtype=np.complex64
-)  # eigenvalues of stiffness matrix in each steps
-Error_step = np.zeros((Nsteps, Ntarget))
 
-Ko, Kp, Ka = make_Ki_vector(N, Koi, Kpi, Kai, sigma=0)
-K = make_K_matrix(Ko, Kp, Ka)
-print("Stiffness Matrix K = \n", K)
-
-"initial values"
-K_step[:, :, 0] = K
-Ko_step[0, :] = Ko
-Kp_step[0, :] = Kp
-Ka_step[0, :] = Ka
-eigvals_step[0, :] = np.sort(np.linalg.eigvals(K))
-
-
-def convert_Dval(D_val_all, D_id_all, target_id, N):
-    D = np.zeros((1, N))
-    D[:, D_id_all[target_id]] = D_val_all[target_id]
-    return D.reshape(
-        N,
-    )
 
 
 Errorlist = []
 for learning_rate in lrlist:
+    Nsteps = int(0.1 / learning_rate)
+
+    Ntarget = np.shape(DI_id_all)[0]
+    K_step = np.zeros((N, N, Nsteps + 1))  # the stiffness materix of each steps
+    Ko_step = np.zeros((Nsteps + 1, N))
+    Kp_step = np.zeros((Nsteps + 1, N))
+    Ka_step = np.zeros((Nsteps + 1, N))
+    DF_step = np.zeros(
+        (Nsteps + 1, N, Ntarget)
+    )  # the angle deflecton of the free state in each step
+    eigvals_step = np.zeros(
+        (Nsteps + 1, N), dtype=np.complex64
+    )  # eigenvalues of stiffness matrix in each steps
+    Error_step = np.zeros((Nsteps, Ntarget))
+
+    Ko, Kp, Ka = make_Ki_vector(N, Koi, Kpi, Kai, sigma=0)
+    K = make_K_matrix(Ko, Kp, Ka)
+    print("Stiffness Matrix K = \n", K)
+
+    "initial values"
+    K_step[:, :, 0] = K
+    Ko_step[0, :] = Ko
+    Kp_step[0, :] = Kp
+    Ka_step[0, :] = Ka
+    eigvals_step[0, :] = np.sort(np.linalg.eigvals(K))
+
+
+    def convert_Dval(D_val_all, D_id_all, target_id, N):
+        D = np.zeros((1, N))
+        D[:, D_id_all[target_id]] = D_val_all[target_id]
+        return D.reshape(
+            N,
+        )
     for i in range(Ntarget):
         DF_step[0, :, i] = convert_Dval(DI_val_all, DI_id_all, i, N)
     Error = 0
